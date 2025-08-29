@@ -2,8 +2,8 @@ import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import LoginScreen from './screens/LoginScreen';  // ← Corregido
-import DashboardScreen from './screens/dashboardScreen'; // ← Corregido para coincidir con el nombre del archivo
+import LoginScreen from './screens/LoginScreen';  
+import DashboardScreen from './screens/dashboardScreen'; 
 import ProfileScreen from './screens/ProfileScreen';
 
 const Stack = createStackNavigator();

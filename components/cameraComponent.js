@@ -1,15 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Text, View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Camera } from 'expo-camera';
+import React, { useState, useEffect } from 'react';
+import { Text, View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import * as Camera from 'expo-camera';
 
 export default function CameraComponent({ onFaceDetected }) {
   const [hasPermission, setHasPermission] = useState(null);
-  const [cameraType, setCameraType] = useState('front'); // Usamos string en lugar de Constants
-  const cameraRef = useRef(null);
+  const [cameraType, setCameraType] = useState('front');
 
   useEffect(() => {
     (async () => {
       try {
+        if (!Camera || !Camera.requestCameraPermissionsAsync) {
+          console.log('Cámara no disponible en este entorno');
+          setHasPermission(false);
+          return;
+        }
+
         const { status } = await Camera.requestCameraPermissionsAsync();
         setHasPermission(status === 'granted');
       } catch (error) {
@@ -19,16 +24,32 @@ export default function CameraComponent({ onFaceDetected }) {
     })();
   }, []);
 
-  // Manejar el caso cuando Camera no está disponible
-  if (!Camera || !Camera.Constants) {
+  if (Platform.OS === 'web' || hasPermission === false) {
     return (
-      <View style={styles.centerContainer}>
-        <Text>Error: Cámara no disponible</Text>
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => onFaceDetected(true)}
+      <View style={styles.cameraContainer}>
+        <Text style={styles.cameraText}>Cámara simulada - Reconocimiento facial</Text>
+        <Text style={styles.cameraText}>Enfoca tu rostro en el marco</Text>
+        
+        <View style={styles.faceFrame}>
+          <Text style={styles.instruction}>Coloque su rostro dentro del marco</Text>
+        </View>
+        
+        <TouchableOpacity
+          style={styles.recognizeButton}
+          onPress={() => {
+            setTimeout(() => {
+              onFaceDetected(true);
+            }, 2000);
+          }}
         >
-          <Text style={styles.buttonText}>Simular reconocimiento</Text>
+          <Text style={styles.buttonText}>Iniciar reconocimiento facial</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => onFaceDetected(false)}
+        >
+          <Text style={styles.buttonText}>Volver al login</Text>
         </TouchableOpacity>
       </View>
     );
@@ -41,27 +62,13 @@ export default function CameraComponent({ onFaceDetected }) {
       </View>
     );
   }
-  
-  if (hasPermission === false) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text>No se tiene acceso a la cámara</Text>
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={() => onFaceDetected(true)}
-        >
-          <Text style={styles.buttonText}>Continuar sin cámara</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+
 
   return (
     <View style={styles.container}>
-      <Camera 
+      <Camera.Camera 
         style={styles.camera} 
         type={cameraType}
-        ref={cameraRef}
         onFacesDetected={({ faces }) => {
           if (faces.length > 0) {
             setTimeout(() => {
@@ -69,23 +76,15 @@ export default function CameraComponent({ onFaceDetected }) {
             }, 2000);
           }
         }}
-        faceDetectorSettings={{
-          mode: 'fast',
-          detectLandmarks: 'none',
-          runClassifications: 'none',
-          minDetectionInterval: 1000,
-          tracking: true,
-        }}
       >
         <View style={styles.buttonContainer}>
           <TouchableOpacity
             style={styles.button}
             onPress={() => {
-              setCameraType(
-                cameraType === 'back' ? 'front' : 'back'
-              );
-            }}>
-            <Text style={styles.text}> Voltear cámara </Text>
+              //setCameraType(cameraType === 'back' ? 'front' : 'back');
+            }}
+          >
+            <Text style={styles.text}>Voltear cámara</Text>
           </TouchableOpacity>
         </View>
         
@@ -94,7 +93,7 @@ export default function CameraComponent({ onFaceDetected }) {
             <Text style={styles.instruction}>Coloque su rostro dentro del marco</Text>
           </View>
         </View>
-      </Camera>
+      </Camera.Camera>
     </View>
   );
 }
@@ -103,15 +102,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  cameraContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#000',
+    padding: 20,
+  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f5f5f5',
-    padding: 20,
   },
   camera: {
     flex: 1,
+  },
+  cameraText: {
+    color: 'white',
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   buttonContainer: {
     position: 'absolute',
@@ -124,7 +135,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     padding: 15,
     borderRadius: 10,
-    marginTop: 10,
   },
   text: {
     fontSize: 18,
@@ -146,11 +156,27 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingBottom: 20,
+    marginBottom: 20,
   },
   instruction: {
     color: 'white',
     fontSize: 16,
     textAlign: 'center',
+  },
+  recognizeButton: {
+    backgroundColor: '#2ecc71',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    width: '80%',
+    alignItems: 'center',
+  },
+  backButton: {
+    backgroundColor: '#e74c3c',
+    padding: 15,
+    borderRadius: 10,
+    width: '80%',
+    alignItems: 'center',
   },
   buttonText: {
     color: 'white',
